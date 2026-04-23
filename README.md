@@ -1,25 +1,28 @@
-# CODING AGENTS: READ THIS FIRST
+# ALIGN — Design Prototype
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+This repository contains the **HTML/CSS/JS design prototype** for ALIGN, an AI-powered weightlifting form coaching app built for CIS 515 – Team 2 at Arizona State University.
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+The designs in this repo were created interactively and then implemented as a full Next.js + FastAPI application.
 
-## What you should do — IMPORTANT
+## Implementation
 
-**Read the chat transcripts first.** There are 1 chat transcript(s) in `chats/`. The transcripts show the full back-and-forth between the user and the design assistant — they tell you **what the user actually wants** and **where they landed** after iterating. Don't skip them. The final HTML files are the output, but the chat is where the intent lives.
+The production codebase lives at **[kenvalenzuela/ai-form-coach](https://github.com/KenValenzuela/ai-form-coach)**.
 
-**Read `project/ALIGN.html` in full.** The user had this file open when they triggered the handoff, so it's almost certainly the primary design they want built. Read it top to bottom — don't skim. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
+It includes:
+- Next.js 15 frontend (the designs from this repo, built in React/TypeScript)
+- FastAPI backend with MediaPipe pose extraction and squat analysis pipeline
+- Real video upload, rep detection, fault scoring, and AI coach feedback
 
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
+## Contents of this repo
 
-## About the design files
+| Path | What it is |
+|---|---|
+| `project/ALIGN.html` | The original single-file HTML prototype |
+| `app/`, `components/`, `lib/` | Next.js implementation of the prototype (superseded by ai-form-coach) |
+| `chats/` | Design conversation transcripts showing how the UI evolved |
 
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
+## Running the prototype locally
 
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
+Open `project/ALIGN.html` directly in a browser — no build step needed. It is a self-contained prototype and does not connect to any backend.
 
-## Bundle contents
-
-- `README.md` — this file
-- `chats/` — conversation transcripts (read these!)
-- `project/` — the `MVP` project files (HTML prototypes, assets, components)
+To run the full application, see [ai-form-coach](https://github.com/KenValenzuela/ai-form-coach).
