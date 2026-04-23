@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ALIGN — Move Right. Every Time.</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --lav:#7B68EE;--lav-l:#A395F5;--lav-d:rgba(123,104,238,.13);
+  --navy:#0D1B3E;--navy2:#1E2D52;
+  --white:#FAFAFA;--off:#F2F1F8;--card:#fff;
+  --muted:#8B8FA8;--border:rgba(13,27,62,.1);
+  --green:oklch(62% .15 145);--amber:oklch(68% .14 70);--red:oklch(60% .18 25);
+  --r:14px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--navy);line-height:1.5}
+#root{min-height:100vh}
+button,input,select,textarea{font-family:'DM Sans',sans-serif}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
+@keyframes scanline{from{transform:translateY(-100%)}to{transform:translateY(500%)}}
+@keyframes dash{from{stroke-dashoffset:500}to{stroke-dashoffset:0}}
+@keyframes slideIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+@keyframes bubbleIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes typing{0%,60%,100%{opacity:1}30%{opacity:.4}}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(123,104,238,.22);border-radius:99px}
+
+/* ── Layout ── */
+.section{padding:64px 0}
+.container{max-width:1100px;margin:0 auto;padding:0 40px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r)}
+
+/* ── Type ── */
+.label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:block}
+
+/* ── Buttons ── */
+.btn-primary{background:var(--lav);color:#fff;border:none;border-radius:9px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;transition:filter .15s,transform .15s}
+.btn-primary:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-primary:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none;filter:none}
+.btn-ghost{background:none;border:1.5px solid var(--border);border-radius:9px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;color:var(--navy);transition:border-color .15s,background .15s}
+.btn-ghost:hover{border-color:var(--lav);background:var(--lav-d);color:var(--lav)}
+
+/* ── Tags ── */
+.tag{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700}
+.tag-red{background:oklch(96% .04 25);color:var(--red);border:1px solid oklch(88% .07 25)}
+.tag-amber{background:oklch(97% .04 70);color:var(--amber);border:1px solid oklch(88% .07 70)}
+.tag-green{background:oklch(96% .05 145);color:var(--green);border:1px solid oklch(88% .08 145)}
+.tag-lav{background:var(--lav-d);color:var(--lav);border:1px solid rgba(123,104,238,.2)}
+
+/* ── Inputs ── */
+input[type=number],input[type=text],select{background:var(--off);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;font-size:14px;color:var(--navy);outline:none;transition:border-color .15s;width:100%}
+input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--lav)}
+
+/* ── Coach bubble ── */
+.coach-bubble{border-radius:18px 18px 18px 4px;padding:14px 18px;font-size:14px;line-height:1.65;position:relative;animation:bubbleIn .4s ease both}
+.coach-bubble.critical{background:oklch(96% .04 25);border:1.5px solid oklch(88% .07 25)}
+.coach-bubble.warning{background:oklch(97% .04 70);border:1.5px solid oklch(88% .07 70)}
+.coach-bubble.good{background:oklch(96% .05 145);border:1.5px solid oklch(88% .08 145)}
+.coach-bubble.tip{background:var(--lav-d);border:1.5px solid rgba(123,104,238,.2)}
+
+/* ── Mobile nav ── */
+.nav-links-desktop{display:flex;gap:4;align-items:center}
+.nav-links-mobile{display:none}
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:6px;color:var(--navy)}
+.mobile-menu{display:none;position:fixed;inset:0;background:rgba(250,250,250,.98);backdrop-filter:blur(12px);z-index:200;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.mobile-menu.open{display:flex}
+.mobile-menu-link{background:none;border:none;font-size:24px;font-weight:700;color:var(--navy);cursor:pointer;padding:12px 32px;border-radius:12px;width:240px;text-align:center}
+.mobile-menu-link:hover{background:var(--lav-d);color:var(--lav)}
+.mobile-menu-close{position:absolute;top:20px;right:20px;background:none;border:none;font-size:24px;cursor:pointer;color:var(--muted);padding:8px}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  .container{padding:0 20px}
+  .section{padding:48px 0}
+  .nav-links-desktop{display:none}
+  .hamburger{display:block}
+  .hero-stats{gap:28px!important}
+  .hero-btns{flex-direction:column;align-items:center}
+  .hero-btns button{width:100%;max-width:300px}
+  .upload-grid{grid-template-columns:1fr!important}
+  .results-score-row{flex-direction:column;gap:14px!important;align-items:flex-start!important}
+  .results-score-actions{margin-left:0!important;flex-wrap:wrap}
+  .overview-grid{grid-template-columns:1fr!important}
+  .tracker-header{flex-direction:column;gap:16px!important;align-items:flex-start!important}
+  .tracker-stats{gap:16px!important}
+  .tracker-grid{grid-template-columns:1fr!important}
+  .routines-header{flex-direction:column;gap:14px!important;align-items:flex-start!important}
+  .routines-grid{grid-template-columns:1fr!important}
+  .footer-inner{flex-direction:column;gap:10px;text-align:center}
+  .section-hdr{flex-direction:column;gap:12px;align-items:flex-start!important}
+  .coach-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;gap:4px!important}
+  .coach-tabs button{white-space:nowrap}
+  .angle-row{flex-wrap:wrap;gap:6px!important}
+  .ex-add-grid{grid-template-columns:1fr 1fr!important}
+}
+@media(max-width:480px){
+  .hero-h1{font-size:32px!important}
+  .results-score-row{padding:16px!important}
+  .coach-bubble{font-size:13px}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback,useMemo}=React;
+
+const TWEAK_DEFAULTS=/*EDITMODE-BEGIN*/{"accentColor":"#7B68EE","navyColor":"#0D1B3E","unitSystem":"lbs"}/*EDITMODE-END*/;
+
+const uid=()=>Math.random().toString(36).slice(2,8);
+const today=()=>new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+const fmt=n=>Number(n).toLocaleString();
+
+/* ── Logo ── */
+function Logo({size=22,light=false}){
+  const c=light?'#A395F5':'#7B68EE',t=light?'#FAFAFA':'#0D1B3E';
+  return(
+    <div style={{display:'flex',alignItems:'center',gap:size*.35,flexShrink:0}}>
+      <svg width={size*.9} height={size*.72} viewBox="0 0 52 42">
+        {[0,1,2].map(i=><rect key={i} x={i*6} y={i*16} width={52-i*12} height={10} rx={5} fill={c}/>)}
+      </svg>
+      <span style={{fontWeight:700,fontSize:size,letterSpacing:'-.03em',color:t,lineHeight:1}}>ALIGN</span>
+    </div>
+  );
+}
+
+/* ── Nav ── */
+function Nav(){
+  const [scrolled,setScrolled]=useState(false);
+  const [menuOpen,setMenuOpen]=useState(false);
+  useEffect(()=>{
+    const el=document.getElementById('page-scroll');
+    if(!el)return;
+    const h=()=>setScrolled(el.scrollTop>40);
+    el.addEventListener('scroll',h);
+    return()=>el.removeEventListener('scroll',h);
+  },[]);
+  const scroll=id=>{
+    setMenuOpen(false);
+    const ps=document.getElementById('page-scroll');
+    const target=document.getElementById(id);
+    if(ps&&target) ps.scrollTo({top:target.offsetTop-64,behavior:'smooth'});
+  };
+  return(
+    <>
+      <nav style={{position:'sticky',top:0,zIndex:100,background:scrolled?'rgba(250,250,250,.95)':'transparent',backdropFilter:'blur(14px)',borderBottom:scrolled?'1px solid var(--border)':'1px solid transparent',height:60,display:'flex',alignItems:'center',padding:'0 24px',justifyContent:'space-between',transition:'background .2s,border .2s'}}>
+        <Logo/>
+        <div className="nav-links-desktop" style={{display:'flex',gap:4,alignItems:'center'}}>
+          {[['analyze','Analyze'],['tracker','Tracker'],['routines','Routines']].map(([id,label])=>(
+            <button key={id} onClick={()=>scroll(id)} style={{background:'none',border:'none',cursor:'pointer',padding:'6px 14px',borderRadius:8,color:'var(--navy)',fontSize:14,fontWeight:500,opacity:.7,transition:'opacity .15s'}}
+              onMouseEnter={e=>e.currentTarget.style.opacity=1}
+              onMouseLeave={e=>e.currentTarget.style.opacity=.7}>{label}</button>
+          ))}
+          <button className="btn-primary" style={{marginLeft:8}} onClick={()=>scroll('analyze')}>Analyze Form</button>
+        </div>
+        <button className="hamburger" onClick={()=>setMenuOpen(true)} aria-label="Open menu">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+        </button>
+      </nav>
+      <div className={`mobile-menu${menuOpen?' open':''}`}>
+        <button className="mobile-menu-close" onClick={()=>setMenuOpen(false)}>✕</button>
+        <Logo size={26}/>
+        <div style={{height:20}}/>
+        {[['analyze','Analyze Form'],['tracker','Tracker'],['routines','Routines']].map(([id,label])=>(
+          <button key={id} className="mobile-menu-link" onClick={()=>scroll(id)}>{label}</button>
+        ))}
+      </div>
+    </>
+  );
+}
+
+/* ── Hero ── */
+function Hero(){
+  const scroll=()=>{
+    const ps=document.getElementById('page-scroll');
+    const t=document.getElementById('analyze');
+    if(ps&&t) ps.scrollTo({top:t.offsetTop-64,behavior:'smooth'});
+  };
+  return(
+    <div style={{background:'var(--navy)',position:'relative',overflow:'hidden',padding:'72px 24px 88px'}}>
+      <svg style={{position:'absolute',inset:0,width:'100%',height:'100%',opacity:.06}} preserveAspectRatio="none">
+        <defs><pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0L0 0 0 40" fill="none" stroke="#7B68EE" strokeWidth="1"/></pattern></defs>
+        <rect width="100%" height="100%" fill="url(#g)"/>
+      </svg>
+      <div style={{position:'absolute',width:600,height:600,borderRadius:'50%',background:'radial-gradient(circle,rgba(123,104,238,.22) 0%,transparent 70%)',top:'50%',left:'50%',transform:'translate(-50%,-55%)',pointerEvents:'none'}}/>
+      <div style={{maxWidth:600,margin:'0 auto',textAlign:'center',position:'relative',animation:'fadeUp .6s ease both'}}>
+        <Logo size={28} light/>
+        <p style={{color:'#A395F5',marginTop:10,fontSize:15}}>Move Right. Every Time.</p>
+        <h1 className="hero-h1" style={{color:'#FAFAFA',fontSize:'clamp(32px,4.5vw,60px)',fontWeight:700,lineHeight:1.08,marginTop:22,letterSpacing:'-.03em'}}>
+          AI-Powered Form Correction<br/><span style={{color:'#A395F5'}}>for Every Lifter</span>
+        </h1>
+        <p style={{color:'rgba(255,255,255,.5)',fontSize:15,marginTop:14,lineHeight:1.65,maxWidth:460,margin:'14px auto 0'}}>Upload a squat video, get instant coaching feedback. Track your volume, build routines. All in one place.</p>
+        <div className="hero-btns" style={{display:'flex',gap:12,justifyContent:'center',marginTop:32}}>
+          <button className="btn-primary" style={{fontSize:15,padding:'13px 32px',boxShadow:'0 0 32px rgba(123,104,238,.4)'}} onClick={scroll}>Analyze My Form →</button>
+          <button style={{background:'rgba(255,255,255,.08)',color:'#FAFAFA',border:'1px solid rgba(255,255,255,.12)',borderRadius:9,padding:'13px 24px',fontSize:15,fontWeight:500,cursor:'pointer'}}>Watch Demo</button>
+        </div>
+        <div className="hero-stats" style={{display:'flex',gap:48,justifyContent:'center',marginTop:48}}>
+          {[['94%','Detection accuracy'],['<30s','Analysis time'],['Free','ASU students']].map(([v,l])=>(
+            <div key={l} style={{textAlign:'center'}}>
+              <div style={{fontSize:26,fontWeight:700,color:'#A395F5'}}>{v}</div>
+              <div style={{fontSize:12,color:'rgba(255,255,255,.38)',marginTop:4}}>{l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── AI Coach messages ── */
+const COACH_MSGS=[
+  {id:0,sev:'critical',icon:'🦵',title:'Knee Cave Detected',
+   msg:"Your hips are higher than your knees — make sure you're hitting parallel! I can see your left knee caving inward by about 18°. This is one of the most common squat mistakes and it puts serious stress on your ACL over time.",
+   cue:'"Push your knees out over your pinky toes." Imagine you\'re trying to spread the floor apart.',
+   drill:'Band-around-knees squat · 3×10 · light weight only until fixed'},
+  {id:1,sev:'critical',icon:'📐',title:'Depth Shortfall',
+   msg:"You're stopping about 4° short of parallel — so close! Your hip crease needs to drop just a bit lower to hit proper depth. This isn't a flexibility issue, it's a confidence issue. Trust the movement.",
+   cue:'"Sit into it — drive your hips down between your heels."',
+   drill:'Box squat to parallel · 3×5 · slow descent, pause at bottom'},
+  {id:2,sev:'warning',icon:'🏋️',title:'Excessive Forward Lean',
+   msg:"Your torso is tilting forward at 52° at the bottom — we want to see under 45°. This usually means tight ankles or a weak upper back. It's moving the load onto your lower back instead of your legs.",
+   cue:'"Chest up, proud chest!" Keep your elbows pointed down, not back.',
+   drill:'Heel-elevated goblet squat · 2×10 · builds ankle range while reinforcing posture'},
+  {id:3,sev:'warning',icon:'⚡',title:'Bar Speed Drops at Sticking Point',
+   msg:"I noticed a clear slowdown at about 60° of knee bend — your sticking point. This is where most people grind or fail. The good news? It's very fixable with targeted work.",
+   cue:'"Imagine you\'re pushing the floor away from you" the whole way up.',
+   drill:'Pause squat at sticking point · 3×3 · 3-second hold, then drive up'},
+  {id:4,sev:'good',icon:'✅',title:'Great Bar Path',
+   msg:"Your bar is tracking nearly vertically the whole rep — lateral deviation under ±1.2 cm. That's excellent control. A vertical bar path means your weight is balanced over mid-foot the way it should be.",
+   cue:'Keep it up! Nothing to change here.',
+   drill:null},
+  {id:5,sev:'good',icon:'✅',title:'Hip Symmetry Looks Good',
+   msg:"Both hips are descending almost evenly — only a 3% left-to-right difference. This tells me you don't have a major imbalance. A lot of lifters have 10–15% asymmetry, so you're ahead of the curve here.",
+   cue:'Keep filming from the back occasionally to monitor this over time.',
+   drill:null},
+  {id:6,sev:'tip',icon:'💡',title:'Coach Tip: Breathing & Bracing',
+   msg:"One thing I didn't see clearly on video but worth mentioning — make sure you're taking a big breath into your belly and bracing your core hard before each rep. This 'Valsalva maneuver' creates intra-abdominal pressure that protects your spine.",
+   cue:'"Big breath, brace like you\'re about to get punched, then squat."',
+   drill:'Practice bracing before every single rep, even warm-ups'},
+];
+
+const sevColor={critical:'var(--red)',warning:'var(--amber)',good:'var(--green)',tip:'var(--lav)'};
+const sevBg={critical:'oklch(96% .04 25)',warning:'oklch(97% .04 70)',good:'oklch(96% .05 145)',tip:'var(--lav-d)'};
+const sevBorder={critical:'oklch(88% .07 25)',warning:'oklch(88% .07 70)',good:'oklch(88% .08 145)',tip:'rgba(123,104,238,.2)'};
+
+function CoachBubble({msg,delay=0}){
+  const [shown,setShown]=useState(false);
+  useEffect(()=>{const t=setTimeout(()=>setShown(true),delay);return()=>clearTimeout(t);},[delay]);
+  if(!shown)return null;
+  return(
+    <div style={{display:'flex',gap:12,alignItems:'flex-start',animation:'bubbleIn .4s ease both'}}>
+      {/* Avatar */}
+      <div style={{width:36,height:36,borderRadius:'50%',background:'var(--navy)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:16,border:'2px solid rgba(123,104,238,.3)'}}>
+        🤖
+      </div>
+      <div style={{flex:1}}>
+        <div style={{fontSize:11,fontWeight:700,color:'var(--muted)',marginBottom:5,letterSpacing:'.04em',textTransform:'uppercase'}}>
+          ALIGN Coach · {msg.icon} {msg.title}
+        </div>
+        <div style={{background:sevBg[msg.sev],border:`1.5px solid ${sevBorder[msg.sev]}`,borderRadius:'18px 18px 18px 4px',padding:'14px 18px'}}>
+          <p style={{fontSize:14,lineHeight:1.7,color:'var(--navy)'}}>{msg.msg}</p>
+          {msg.cue&&(
+            <div style={{marginTop:12,padding:'10px 14px',background:'rgba(255,255,255,.6)',borderRadius:10,fontSize:13,lineHeight:1.6,borderLeft:`3px solid ${sevColor[msg.sev]}`}}>
+              <strong>Cue:</strong> {msg.cue}
+            </div>
+          )}
+          {msg.drill&&(
+            <div style={{marginTop:8,fontSize:12,color:'var(--muted)',background:'rgba(0,0,0,.04)',borderRadius:8,padding:'7px 12px'}}>
+              <strong>Drill:</strong> {msg.drill}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Analyze Section ── */
+function AnalyzeSection(){
+  const [phase,setPhase]=useState('upload');
+  const [dragging,setDragging]=useState(false);
+  const [file,setFile]=useState(null);
+  const [exercise,setExercise]=useState('squat');
+  const [progress,setProgress]=useState(0);
+  const [step,setStep]=useState(0);
+  const [activeTab,setActiveTab]=useState('coach');
+  const [expandedIssue,setExpandedIssue]=useState(null);
+  const [coachFilter,setCoachFilter]=useState('all');
+  const inputRef=useRef();
+  const score=73;
+
+  const steps=['Extracting frames…','Detecting pose landmarks…','Calculating joint angles…','Scoring form quality…','Generating coaching report…'];
+
+  const startAnalysis=()=>{
+    setPhase('analyzing');setProgress(0);setStep(0);
+    let p=0;
+    const iv=setInterval(()=>{
+      p+=Math.random()*3.2+1;
+      if(p>=100){p=100;clearInterval(iv);setTimeout(()=>{setPhase('results');setActiveTab('coach');},500);}
+      setProgress(p);setStep(Math.min(Math.floor(p/20),4));
+    },80);
+  };
+
+  const issues=[
+    {id:0,sev:'critical',label:'Knee Cave (Valgus Collapse)',angle:'Left knee: 18° inward'},
+    {id:1,sev:'critical',label:'Depth Shortfall',angle:'Hip crease: 4° above parallel'},
+    {id:2,sev:'warning',label:'Excessive Forward Lean',angle:'Torso: 52° (target <45°)'},
+    {id:3,sev:'warning',label:'Sticking Point Slowdown',angle:'Velocity drop at 60° knee bend'},
+    {id:4,sev:'good',label:'Bar Path Stability',angle:'Deviation: ±1.2 cm'},
+    {id:5,sev:'good',label:'Hip Symmetry',angle:'L/R difference: <3%'},
+  ];
+  const sevMap={critical:{cls:'tag-red',word:'Fix'},warning:{cls:'tag-amber',word:'Improve'},good:{cls:'tag-green',word:'Good'}};
+
+  const filteredMsgs=coachFilter==='all'?COACH_MSGS:COACH_MSGS.filter(m=>m.sev===coachFilter);
+
+  return(
+    <section id="analyze" className="section" style={{background:'#fff',borderBottom:'1px solid var(--border)'}}>
+      <div className="container">
+        <div style={{marginBottom:32}}>
+          <span className="tag tag-lav" style={{marginBottom:10,display:'inline-block'}}>Form Analysis</span>
+          <h2 style={{fontSize:28,fontWeight:700,letterSpacing:'-.02em'}}>Analyze Your Squat</h2>
+          <p style={{color:'var(--muted)',fontSize:15,marginTop:6}}>Upload a side-view video — our CV model tracks 17 landmarks and gives you plain-language coaching.</p>
+        </div>
+
+        {/* ── UPLOAD ── */}
+        {phase==='upload'&&(
+          <div className="upload-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,animation:'fadeUp .4s ease both'}}>
+            <div className="card" style={{padding:24}}>
+              <span className="label">Exercise</span>
+              <div style={{display:'flex',gap:8,marginBottom:18}}>
+                {['squat','deadlift','bench'].map(ex=>(
+                  <button key={ex} onClick={()=>setExercise(ex)} style={{flex:1,padding:'9px 0',borderRadius:8,border:exercise===ex?'2px solid var(--lav)':'1.5px solid var(--border)',background:exercise===ex?'var(--lav-d)':'#fff',color:exercise===ex?'var(--lav)':'var(--navy)',fontSize:14,fontWeight:600,cursor:'pointer',transition:'all .15s',textTransform:'capitalize'}}>{ex}</button>
+                ))}
+              </div>
+              {exercise!=='squat'&&<p style={{fontSize:12,color:'var(--amber)',marginBottom:14,background:'oklch(98% .03 70)',border:'1px solid oklch(88% .07 70)',borderRadius:7,padding:'7px 12px'}}>MVP supports squat only — coming soon.</p>}
+              <span className="label">Video</span>
+              <div onDragOver={e=>{e.preventDefault();setDragging(true)}} onDragLeave={()=>setDragging(false)}
+                onDrop={e=>{e.preventDefault();setDragging(false);const f=e.dataTransfer.files[0];if(f?.type.startsWith('video/'))setFile(f);}}
+                onClick={()=>inputRef.current.click()}
+                style={{border:`2px dashed ${dragging?'var(--lav)':file?'var(--green)':'var(--border)'}`,borderRadius:12,padding:'32px 20px',textAlign:'center',cursor:'pointer',transition:'all .2s',background:dragging?'var(--lav-d)':file?'oklch(97% .04 145)':'var(--off)',marginBottom:18}}>
+                <input ref={inputRef} type="file" accept="video/*" style={{display:'none'}} onChange={e=>setFile(e.target.files[0])}/>
+                {file?(
+                  <><div style={{fontSize:28,marginBottom:8}}>🎬</div>
+                  <div style={{fontWeight:600,fontSize:14}}>{file.name}</div>
+                  <div style={{color:'var(--muted)',fontSize:12,marginTop:3}}>{(file.size/1e6).toFixed(1)} MB</div></>
+                ):(
+                  <><svg width="36" height="36" viewBox="0 0 40 40" fill="none" style={{margin:'0 auto 10px'}}>
+                    <rect width="40" height="40" rx="10" fill="var(--lav-d)"/>
+                    <path d="M20 26V14M20 14l-5 5M20 14l5 5" stroke="var(--lav)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M13 28h14" stroke="var(--lav)" strokeWidth="2.2" strokeLinecap="round"/>
+                  </svg>
+                  <div style={{fontWeight:600,fontSize:14}}>{dragging?'Drop to upload':'Drag & drop video'}</div>
+                  <div style={{color:'var(--muted)',fontSize:12,marginTop:4}}>or tap to browse · MP4, MOV up to 500 MB</div></>
+                )}
+              </div>
+              <button className="btn-primary" style={{width:'100%',padding:'13px',fontSize:15}} disabled={!file||exercise!=='squat'} onClick={startAnalysis}>
+                {file&&exercise==='squat'?'Analyze Now →':'Upload a video to continue'}
+              </button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:16}}>
+              <div className="card" style={{padding:22}}>
+                <span className="label">Recording Tips</span>
+                {[['Camera at hip height, side view','📐'],['Full body in frame the whole time','📏'],['Good lighting — avoid backlighting','💡'],['Record 2–5 reps for best results','🔁']].map(([t,e])=>(
+                  <div key={t} style={{display:'flex',gap:10,alignItems:'flex-start',marginBottom:10,fontSize:14}}>
+                    <span style={{fontSize:16,flexShrink:0,lineHeight:1.4}}>{e}</span><span>{t}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="card" style={{padding:22,background:'var(--navy)',border:'none'}}>
+                <div style={{color:'#A395F5',fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'.07em',marginBottom:12}}>What ALIGN detects</div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                  {['Knee valgus','Hip depth','Bar path','Torso angle','Ankle mobility','Hip symmetry','Sticking point','Rep speed'].map(t=>(
+                    <div key={t} style={{display:'flex',alignItems:'center',gap:6,color:'rgba(255,255,255,.7)',fontSize:13}}>
+                      <span style={{color:'#A395F5',fontSize:8}}>●</span>{t}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── ANALYZING ── */}
+        {phase==='analyzing'&&(
+          <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'56px 0',animation:'fadeUp .4s ease both'}}>
+            <div style={{position:'relative',width:150,height:200,marginBottom:24}}>
+              <svg width="150" height="200" viewBox="0 0 150 200" fill="none">
+                <circle cx="75" cy="22" r="14" stroke="#A395F5" strokeWidth="2.5" fill="none" style={{animation:'pulse 1.5s infinite'}}/>
+                <line x1="75" y1="36" x2="73" y2="90" stroke="#7B68EE" strokeWidth="2.5" strokeDasharray="6 3"/>
+                <line x1="73" y1="50" x2="45" y2="68" stroke="#A395F5" strokeWidth="2"/>
+                <line x1="73" y1="50" x2="103" y2="70" stroke="#A395F5" strokeWidth="2"/>
+                <line x1="45" y1="68" x2="33" y2="103" stroke="#7B68EE" strokeWidth="2" strokeDasharray="200" strokeDashoffset="200" style={{animation:'dash .8s .3s forwards'}}/>
+                <line x1="103" y1="70" x2="113" y2="105" stroke="#7B68EE" strokeWidth="2" strokeDasharray="200" strokeDashoffset="200" style={{animation:'dash .8s .5s forwards'}}/>
+                <line x1="73" y1="90" x2="54" y2="100" stroke="#A395F5" strokeWidth="2.5"/>
+                <line x1="73" y1="90" x2="93" y2="100" stroke="#A395F5" strokeWidth="2.5"/>
+                <line x1="54" y1="100" x2="40" y2="150" stroke="#7B68EE" strokeWidth="2.5" strokeDasharray="200" strokeDashoffset="200" style={{animation:'dash .8s .6s forwards'}}/>
+                <line x1="93" y1="100" x2="108" y2="148" stroke="#7B68EE" strokeWidth="2.5" strokeDasharray="200" strokeDashoffset="200" style={{animation:'dash .8s .8s forwards'}}/>
+                <line x1="40" y1="150" x2="35" y2="182" stroke="#A395F5" strokeWidth="2"/>
+                <line x1="108" y1="148" x2="114" y2="180" stroke="#A395F5" strokeWidth="2"/>
+                {[[75,22],[45,68],[103,70],[33,103],[113,105],[54,100],[93,100],[40,150],[108,148]].map(([x,y],i)=>(
+                  <circle key={i} cx={x} cy={y} r="4" fill="#A395F5" style={{animation:`pulse ${1+i*.12}s infinite`}}/>
+                ))}
+              </svg>
+              <div style={{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none'}}>
+                <div style={{position:'absolute',left:0,right:0,height:2,background:'linear-gradient(to right,transparent,rgba(123,104,238,.8),transparent)',animation:'scanline 2s linear infinite'}}/>
+              </div>
+            </div>
+            <h3 style={{fontSize:20,fontWeight:700,marginBottom:6}}>Analyzing your squat…</h3>
+            <p style={{color:'var(--muted)',fontSize:13,marginBottom:24,fontFamily:"'DM Mono',monospace",textAlign:'center'}}>{steps[step]}</p>
+            <div style={{width:Math.min(320,window.innerWidth-80),height:4,background:'var(--border)',borderRadius:4,overflow:'hidden'}}>
+              <div style={{height:'100%',width:`${progress}%`,background:'linear-gradient(to right,#7B68EE,#A395F5)',borderRadius:4,transition:'width .1s linear'}}/>
+            </div>
+            <div style={{color:'var(--muted)',fontSize:12,marginTop:8,fontFamily:"'DM Mono',monospace"}}>{Math.round(progress)}%</div>
+          </div>
+        )}
+
+        {/* ── RESULTS ── */}
+        {phase==='results'&&(
+          <div style={{animation:'fadeUp .4s ease both'}}>
+            {/* Score banner */}
+            <div className="results-score-row" style={{display:'flex',alignItems:'center',gap:20,background:'var(--navy)',borderRadius:16,padding:'20px 24px',marginBottom:20,flexWrap:'wrap'}}>
+              <svg width="70" height="70" viewBox="0 0 70 70" style={{flexShrink:0}}>
+                <circle cx="35" cy="35" r="28" fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="6"/>
+                <circle cx="35" cy="35" r="28" fill="none" stroke="#7B68EE" strokeWidth="6" strokeLinecap="round"
+                  strokeDasharray={`${2*Math.PI*28*score/100} ${2*Math.PI*28*(1-score/100)}`}
+                  strokeDashoffset={2*Math.PI*28*.25}/>
+                <text x="35" y="39" textAnchor="middle" fill="#FAFAFA" fontSize="18" fontWeight="700" fontFamily="DM Sans">{score}</text>
+              </svg>
+              <div style={{flex:1,minWidth:160}}>
+                <div style={{color:'rgba(255,255,255,.4)',fontSize:11,fontWeight:700,letterSpacing:'.07em',textTransform:'uppercase',marginBottom:3}}>Form Score</div>
+                <div style={{color:'#FAFAFA',fontSize:20,fontWeight:700,lineHeight:1.2}}>Needs Work — 2 critical fixes</div>
+                <div style={{color:'rgba(255,255,255,.38)',fontSize:13,marginTop:3}}>Side-view squat · {today()}</div>
+              </div>
+              <div className="results-score-actions" style={{display:'flex',gap:8,marginLeft:'auto',flexWrap:'wrap'}}>
+                <button className="btn-ghost" style={{color:'#FAFAFA',borderColor:'rgba(255,255,255,.15)',fontSize:13}} onClick={()=>{setPhase('upload');setFile(null);}}>New Analysis</button>
+                <button className="btn-primary" style={{fontSize:13}}>Export Report</button>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="coach-tabs" style={{display:'flex',gap:2,borderBottom:'1px solid var(--border)',marginBottom:22,overflowX:'auto'}}>
+              {[['coach','🤖 AI Coach'],['overview','Overview'],['issues','Issues'],['video','Video']].map(([t,l])=>(
+                <button key={t} onClick={()=>setActiveTab(t)} style={{background:'none',border:'none',borderBottom:activeTab===t?'2px solid var(--lav)':'2px solid transparent',padding:'11px 16px',fontSize:14,fontWeight:600,cursor:'pointer',color:activeTab===t?'var(--lav)':'var(--muted)',whiteSpace:'nowrap',transition:'color .15s',marginBottom:'-1px'}}>
+                  {l}
+                </button>
+              ))}
+            </div>
+
+            {/* ── AI COACH TAB ── */}
+            {activeTab==='coach'&&(
+              <div style={{animation:'slideIn .3s ease both'}}>
+                {/* Filter row */}
+                <div style={{display:'flex',gap:8,marginBottom:24,flexWrap:'wrap'}}>
+                  <span style={{fontSize:13,fontWeight:600,color:'var(--muted)',alignSelf:'center',marginRight:4}}>Show:</span>
+                  {[['all','All feedback'],['critical','Fix now'],['warning','Improve'],['good','Good form'],['tip','Tips']].map(([f,l])=>(
+                    <button key={f} onClick={()=>setCoachFilter(f)} style={{padding:'6px 14px',borderRadius:20,border:coachFilter===f?'2px solid var(--lav)':'1.5px solid var(--border)',background:coachFilter===f?'var(--lav-d)':'#fff',color:coachFilter===f?'var(--lav)':'var(--muted)',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all .15s'}}>{l}</button>
+                  ))}
+                </div>
+
+                {/* Coach intro bubble */}
+                <div style={{display:'flex',gap:12,marginBottom:20,alignItems:'flex-start'}}>
+                  <div style={{width:36,height:36,borderRadius:'50%',background:'var(--navy)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:16,border:'2px solid rgba(123,104,238,.3)'}}>🤖</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'var(--muted)',marginBottom:5,letterSpacing:'.04em',textTransform:'uppercase'}}>ALIGN Coach · Analysis Complete</div>
+                    <div style={{background:'var(--off)',border:'1px solid var(--border)',borderRadius:'18px 18px 18px 4px',padding:'14px 18px',fontSize:14,lineHeight:1.7}}>
+                      Hey! I finished analyzing your squat. You scored <strong style={{color:'var(--lav)'}}>{score}/100</strong> — not bad, but there are a couple of things holding you back. The big ones are your <strong>knee cave</strong> and <strong>squat depth</strong>. Fix those two and you'll see your score jump significantly. Let's go through everything 👇
+                    </div>
+                  </div>
+                </div>
+
+                {/* Feedback bubbles */}
+                <div style={{display:'flex',flexDirection:'column',gap:18}}>
+                  {filteredMsgs.map((msg,i)=>(
+                    <CoachBubble key={msg.id} msg={msg} delay={i*120}/>
+                  ))}
+                </div>
+
+                {/* Summary card */}
+                <div style={{marginTop:24,background:'var(--navy)',borderRadius:14,padding:'20px 22px',display:'flex',alignItems:'flex-start',gap:14}}>
+                  <span style={{fontSize:22,flexShrink:0}}>🎯</span>
+                  <div>
+                    <div style={{color:'#A395F5',fontSize:12,fontWeight:700,letterSpacing:'.07em',textTransform:'uppercase',marginBottom:6}}>This Week's Focus</div>
+                    <div style={{color:'#FAFAFA',fontSize:14,lineHeight:1.7}}>
+                      1. <strong>Band-around-knees squat</strong> — 3×10 before every session until knee cave is gone<br/>
+                      2. <strong>Box squat to parallel</strong> — 3×5 to build confidence hitting depth<br/>
+                      3. <strong>Record every squat</strong> — come back and re-analyze after 2 weeks
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── OVERVIEW TAB ── */}
+            {activeTab==='overview'&&(
+              <div className="overview-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
+                <div className="card" style={{padding:22}}>
+                  <div style={{fontWeight:700,fontSize:14,marginBottom:14}}>Pose Overlay</div>
+                  <div style={{display:'flex',justifyContent:'center'}}>
+                    <svg width="180" height="248" viewBox="0 0 180 248" style={{background:'#0D1B3E',borderRadius:10}}>
+                      <circle cx="90" cy="24" r="14" stroke="#A395F5" strokeWidth="2.5" fill="none"/>
+                      <line x1="90" y1="38" x2="88" y2="96" stroke="#7B68EE" strokeWidth="2.5"/>
+                      <line x1="88" y1="52" x2="60" y2="70" stroke="#A395F5" strokeWidth="2"/>
+                      <line x1="88" y1="52" x2="118" y2="72" stroke="#A395F5" strokeWidth="2"/>
+                      <line x1="60" y1="70" x2="48" y2="106" stroke="#7B68EE" strokeWidth="2"/>
+                      <line x1="118" y1="72" x2="130" y2="108" stroke="#7B68EE" strokeWidth="2"/>
+                      <line x1="88" y1="96" x2="67" y2="108" stroke="#A395F5" strokeWidth="2.5"/>
+                      <line x1="88" y1="96" x2="110" y2="108" stroke="#A395F5" strokeWidth="2.5"/>
+                      <line x1="67" y1="108" x2="50" y2="158" stroke="#7B68EE" strokeWidth="2.5"/>
+                      <line x1="110" y1="108" x2="130" y2="155" stroke="#7B68EE" strokeWidth="2.5"/>
+                      <line x1="50" y1="158" x2="59" y2="206" stroke="#A395F5" strokeWidth="2.5"/>
+                      <line x1="130" y1="155" x2="122" y2="204" stroke="#A395F5" strokeWidth="2.5"/>
+                      <line x1="59" y1="206" x2="42" y2="216" stroke="#7B68EE" strokeWidth="2"/>
+                      <line x1="122" y1="204" x2="140" y2="214" stroke="#7B68EE" strokeWidth="2"/>
+                      <circle cx="51" cy="161" r="9" fill="none" stroke="oklch(60% .18 25)" strokeWidth="2" style={{animation:'pulse 1.5s infinite'}}/>
+                      <line x1="60" y1="155" x2="80" y2="140" stroke="oklch(60% .18 25)" strokeWidth="1.5" strokeDasharray="3 2"/>
+                      <text x="82" y="138" fill="oklch(60% .18 25)" fontSize="8" fontFamily="DM Sans">Valgus ⚠</text>
+                      <path d="M50 158 A16 16 0 0 0 63 172" fill="none" stroke="#7B68EE" strokeWidth="1.5"/>
+                      <text x="30" y="178" fill="#A395F5" fontSize="8" fontFamily="DM Mono">88°</text>
+                      {[[90,24],[60,70],[118,72],[48,106],[130,108],[67,108],[110,108],[50,158],[130,155],[59,206],[122,204]].map(([x,y],i)=>(
+                        <circle key={i} cx={x} cy={y} r="3.5" fill="#A395F5"/>
+                      ))}
+                      <circle cx="51" cy="161" r="3.5" fill="oklch(60% .18 25)"/>
+                    </svg>
+                  </div>
+                  <p style={{fontSize:12,color:'var(--muted)',textAlign:'center',marginTop:10}}>Side-view · Rep 2 of 3 · Frame 84</p>
+                </div>
+                <div style={{display:'flex',flexDirection:'column',gap:14}}>
+                  <div className="card" style={{padding:20}}>
+                    <div style={{fontWeight:700,fontSize:14,marginBottom:12}}>Joint Angles — Bottom</div>
+                    {[['Knee angle','88°','85–95°',true],['Hip / torso lean','52°','<45°',false],['Ankle dorsiflexion','28°','>25°',true],['Knee valgus (L)','18°','<5°',false]].map(([j,a,t,ok])=>(
+                      <div key={j} className="angle-row" style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+                        <span style={{width:7,height:7,borderRadius:'50%',background:ok?'var(--green)':'var(--red)',flexShrink:0,display:'inline-block'}}/>
+                        <span style={{flex:1,fontSize:13,fontWeight:500,minWidth:100}}>{j}</span>
+                        <span style={{fontFamily:"'DM Mono',monospace",fontSize:13,color:ok?'var(--green)':'var(--red)',fontWeight:600}}>{a}</span>
+                        <span style={{fontSize:11,color:'var(--muted)'}}>target {t}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="card" style={{padding:20,background:'var(--lav-d)',border:'1px solid rgba(123,104,238,.2)'}}>
+                    <div style={{fontWeight:700,fontSize:14,color:'var(--lav)',marginBottom:8}}>Priority Fix</div>
+                    <p style={{fontSize:14,lineHeight:1.65}}>Your <strong>left knee is caving inward</strong> — fix this first. See the AI Coach tab for full drills.</p>
+                    <button onClick={()=>setActiveTab('coach')} style={{marginTop:12,background:'var(--lav)',color:'#fff',border:'none',borderRadius:8,padding:'8px 16px',fontSize:13,fontWeight:700,cursor:'pointer'}}>View AI Coach →</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── ISSUES TAB ── */}
+            {activeTab==='issues'&&(
+              <div style={{display:'flex',flexDirection:'column',gap:10,animation:'slideIn .3s ease both'}}>
+                {issues.map((issue,i)=>(
+                  <div key={issue.id} className="card" style={{border:`1.5px solid ${expandedIssue===i?'var(--lav)':'var(--border)'}`,transition:'border .2s',animation:`slideIn .3s ${i*.06}s ease both`,opacity:0}}>
+                    <button onClick={()=>setExpandedIssue(expandedIssue===i?null:i)}
+                      style={{width:'100%',background:'none',border:'none',padding:'14px 16px',cursor:'pointer',display:'flex',alignItems:'center',gap:10,textAlign:'left',flexWrap:'wrap'}}>
+                      <span className={`tag ${sevMap[issue.sev].cls}`}>{sevMap[issue.sev].word}</span>
+                      <span style={{flex:1,fontWeight:600,fontSize:14,minWidth:120}}>{issue.label}</span>
+                      <span style={{fontFamily:"'DM Mono',monospace",fontSize:12,color:'var(--muted)'}}>{issue.angle}</span>
+                      <span style={{color:'var(--muted)',fontSize:16,marginLeft:4}}>{expandedIssue===i?'↑':'↓'}</span>
+                    </button>
+                    {expandedIssue===i&&(
+                      <div style={{padding:'0 16px 16px',borderTop:'1px solid var(--border)',paddingTop:12}}>
+                        {COACH_MSGS.find(m=>m.id===issue.id)&&(
+                          <div style={{fontSize:14,lineHeight:1.7,color:'var(--navy)'}}>
+                            <p style={{marginBottom:10}}>{COACH_MSGS.find(m=>m.id===issue.id).msg}</p>
+                            {COACH_MSGS.find(m=>m.id===issue.id).cue&&(
+                              <div style={{padding:'8px 12px',background:'var(--lav-d)',borderRadius:8,fontSize:13,borderLeft:'3px solid var(--lav)'}}>
+                                <strong>Cue:</strong> {COACH_MSGS.find(m=>m.id===issue.id).cue}
+                              </div>
+                            )}
+                            {COACH_MSGS.find(m=>m.id===issue.id).drill&&(
+                              <div style={{marginTop:8,padding:'8px 12px',background:'var(--off)',borderRadius:8,fontSize:12,color:'var(--muted)'}}>
+                                <strong>Drill:</strong> {COACH_MSGS.find(m=>m.id===issue.id).drill}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* ── VIDEO TAB ── */}
+            {activeTab==='video'&&(
+              <div style={{maxWidth:640,animation:'slideIn .3s ease both'}}>
+                <div style={{background:'#0D1B3E',borderRadius:14,aspectRatio:'16/9',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:14,position:'relative',overflow:'hidden'}}>
+                  <svg width="100%" height="100%" style={{position:'absolute',inset:0}}><defs><pattern id="st" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="10" height="20" fill="rgba(123,104,238,.05)"/></pattern></defs><rect width="100%" height="100%" fill="url(#st)"/></svg>
+                  <div style={{position:'relative',textAlign:'center'}}>
+                    <div style={{width:56,height:56,background:'rgba(123,104,238,.3)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px',border:'2px solid rgba(163,149,245,.4)'}}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="#A395F5"><path d="M8 5v14l11-7z"/></svg>
+                    </div>
+                    <p style={{color:'rgba(255,255,255,.4)',fontSize:13,fontFamily:"'DM Mono',monospace"}}>annotated_squat_rep2.mp4</p>
+                  </div>
+                </div>
+                <p style={{fontSize:13,color:'var(--muted)',lineHeight:1.6}}>Pose skeleton overlaid with joint angles, flags problem areas in red, highlights good form in green.</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/* ── TRACKER ── */
+const EXERCISES=['Back Squat','Front Squat','Deadlift','Romanian Deadlift','Bench Press','Overhead Press','Pull-up','Barbell Row','Leg Press','Hip Thrust','Lunges','Other'];
+
+function TrackerSection({unit}){
+  const storageKey='align_tracker2_'+unit;
+  const [sessions,setSessions]=useState(()=>{try{return JSON.parse(localStorage.getItem(storageKey))||[]}catch{return[]}});
+  const [form,setForm]=useState({exercise:'Back Squat',weight:'',reps:'',sets:''});
+  const [activeSession,setActiveSession]=useState(()=>localStorage.getItem('align_active_session')||null);
+
+  useEffect(()=>{localStorage.setItem(storageKey,JSON.stringify(sessions))},[sessions,unit]);
+
+  const startSession=()=>{
+    const id=uid();
+    const s={id,date:today(),name:'Session '+((sessions.length||0)+1),entries:[]};
+    setSessions(p=>[s,...p]);setActiveSession(id);localStorage.setItem('align_active_session',id);
+  };
+  const addEntry=()=>{
+    if(!form.weight||!form.reps||!form.sets)return;
+    const entry={id:uid(),...form,weight:+form.weight,reps:+form.reps,sets:+form.sets,volume:+form.weight*+form.reps*+form.sets};
+    setSessions(p=>p.map(s=>s.id===activeSession?{...s,entries:[...s.entries,entry]}:s));
+    setForm(f=>({...f,weight:'',reps:'',sets:''}));
+  };
+  const removeEntry=(sid,eid)=>setSessions(p=>p.map(s=>s.id===sid?{...s,entries:s.entries.filter(e=>e.id!==eid)}:s));
+  const removeSession=id=>setSessions(p=>p.filter(s=>s.id!==id));
+  const endSession=()=>{setActiveSession(null);localStorage.removeItem('align_active_session');};
+
+  const curSession=sessions.find(s=>s.id===activeSession);
+  const vol=s=>s.entries.reduce((a,e)=>a+e.volume,0);
+  const sets=s=>s.entries.reduce((a,e)=>a+e.sets,0);
+  const reps=s=>s.entries.reduce((a,e)=>a+e.sets*e.reps,0);
+  const totalVol=useMemo(()=>sessions.reduce((a,s)=>a+vol(s),0),[sessions]);
+  const totalSets=useMemo(()=>sessions.reduce((a,s)=>a+sets(s),0),[sessions]);
+
+  return(
+    <section id="tracker" className="section" style={{background:'var(--off)',borderBottom:'1px solid var(--border)'}}>
+      <div className="container">
+        <div className="tracker-header" style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',marginBottom:24}}>
+          <div>
+            <span className="tag tag-lav" style={{marginBottom:10,display:'inline-block'}}>Volume Tracker</span>
+            <h2 style={{fontSize:28,fontWeight:700,letterSpacing:'-.02em'}}>Log Your Training</h2>
+            <p style={{color:'var(--muted)',fontSize:15,marginTop:6}}>Volume = weight × reps × sets</p>
+          </div>
+          <div className="tracker-stats" style={{display:'flex',gap:28,textAlign:'right',flexWrap:'wrap'}}>
+            {[[fmt(totalVol),`Total volume (${unit})`],[totalSets,'Total sets'],[sessions.length,'Sessions']].map(([v,l])=>(
+              <div key={l}><div style={{fontSize:22,fontWeight:700,color:'var(--lav)'}}>{v}</div><div style={{fontSize:12,color:'var(--muted)'}}>{l}</div></div>
+            ))}
+          </div>
+        </div>
+
+        <div className="tracker-grid" style={{display:'grid',gridTemplateColumns:'320px 1fr',gap:20}}>
+          <div style={{display:'flex',flexDirection:'column',gap:14}}>
+            {!activeSession?(
+              <div className="card" style={{padding:28,textAlign:'center'}}>
+                <div style={{fontSize:32,marginBottom:10}}>🏋️</div>
+                <div style={{fontWeight:700,fontSize:16,marginBottom:6}}>Ready to train?</div>
+                <p style={{color:'var(--muted)',fontSize:13,marginBottom:18,lineHeight:1.6}}>Start a session to log your sets.</p>
+                <button className="btn-primary" style={{width:'100%',padding:'12px'}} onClick={startSession}>Start Session</button>
+              </div>
+            ):(
+              <div className="card" style={{padding:22}}>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
+                  <div>
+                    <div style={{fontWeight:700,fontSize:15}}>{curSession?.name}</div>
+                    <div style={{fontSize:12,color:'var(--muted)',marginTop:2}}>{curSession?.date}</div>
+                  </div>
+                  <span style={{width:8,height:8,borderRadius:'50%',background:'var(--green)',display:'inline-block',boxShadow:'0 0 6px var(--green)'}}/>
+                </div>
+                <span className="label">Exercise</span>
+                <select value={form.exercise} onChange={e=>setForm(f=>({...f,exercise:e.target.value}))} style={{marginBottom:12}}>
+                  {EXERCISES.map(ex=><option key={ex}>{ex}</option>)}
+                </select>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:12}}>
+                  {[['Weight',unit,'weight'],['Sets','sets','sets'],['Reps','reps','reps']].map(([l,ph,f])=>(
+                    <div key={f}><span className="label">{l}</span>
+                      <input type="number" min="0" placeholder={ph} value={form[f]} onChange={e=>setForm(p=>({...p,[f]:e.target.value}))}/>
+                    </div>
+                  ))}
+                </div>
+                {form.weight&&form.reps&&form.sets&&(
+                  <div style={{fontSize:12,color:'var(--muted)',marginBottom:10,textAlign:'center',background:'var(--off)',borderRadius:7,padding:'6px'}}>
+                    Volume: <strong style={{color:'var(--lav)'}}>{fmt(+form.weight*+form.reps*+form.sets)} {unit}</strong>
+                  </div>
+                )}
+                <button className="btn-primary" style={{width:'100%',padding:'11px',marginBottom:8}} onClick={addEntry} disabled={!form.weight||!form.reps||!form.sets}>+ Log Set</button>
+                <button className="btn-ghost" style={{width:'100%',padding:'8px',fontSize:12,color:'var(--muted)'}} onClick={endSession}>End Session</button>
+              </div>
+            )}
+            {activeSession&&curSession&&(
+              <div className="card" style={{padding:18}}>
+                <div style={{fontWeight:700,fontSize:13,marginBottom:12}}>This Session</div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',textAlign:'center'}}>
+                  {[['Vol',fmt(vol(curSession))],['Sets',sets(curSession)],['Reps',reps(curSession)]].map(([l,v])=>(
+                    <div key={l} style={{padding:'6px 0'}}>
+                      <div style={{fontSize:18,fontWeight:700,color:'var(--lav)'}}>{v}</div>
+                      <div style={{fontSize:11,color:'var(--muted)'}}>{l}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div style={{display:'flex',flexDirection:'column',gap:12,maxHeight:520,overflowY:'auto',paddingRight:2}}>
+            {sessions.length===0&&(
+              <div className="card" style={{padding:40,textAlign:'center',color:'var(--muted)'}}>
+                <div style={{fontSize:32,marginBottom:10,opacity:.35}}>📋</div>
+                <div style={{fontWeight:600}}>No sessions yet</div>
+                <div style={{fontSize:13,marginTop:4}}>Start a session and log your first set.</div>
+              </div>
+            )}
+            {sessions.map(s=>(
+              <div key={s.id} className="card" style={{padding:18,border:s.id===activeSession?'1.5px solid var(--lav)':'1px solid var(--border)'}}>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10,flexWrap:'wrap',gap:8}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    {s.id===activeSession&&<span style={{width:7,height:7,borderRadius:'50%',background:'var(--green)',display:'inline-block',boxShadow:'0 0 5px var(--green)'}}/>}
+                    <span style={{fontWeight:700,fontSize:14}}>{s.name}</span>
+                    <span style={{fontSize:12,color:'var(--muted)'}}>{s.date}</span>
+                  </div>
+                  <div style={{display:'flex',gap:12,alignItems:'center'}}>
+                    <span style={{fontSize:12,color:'var(--muted)'}}><strong style={{color:'var(--navy)'}}>{fmt(vol(s))}</strong> {unit}</span>
+                    <span style={{fontSize:12,color:'var(--muted)'}}><strong style={{color:'var(--navy)'}}>{sets(s)}</strong> sets</span>
+                    <button onClick={()=>{removeSession(s.id);if(activeSession===s.id)setActiveSession(null);}} style={{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:16,padding:'0 4px'}}
+                      onMouseEnter={e=>e.currentTarget.style.color='var(--red)'}
+                      onMouseLeave={e=>e.currentTarget.style.color='var(--muted)'}>×</button>
+                  </div>
+                </div>
+                {s.entries.length===0?(
+                  <p style={{fontSize:13,color:'var(--muted)',fontStyle:'italic'}}>No entries yet.</p>
+                ):(
+                  <div style={{overflowX:'auto'}}>
+                    <table style={{width:'100%',borderCollapse:'collapse',fontSize:13,minWidth:380}}>
+                      <thead><tr>
+                        {['Exercise','Wt','Sets','Reps','Vol',''].map(h=><th key={h} style={{textAlign:'left',padding:'3px 8px',fontWeight:600,fontSize:11,textTransform:'uppercase',letterSpacing:'.05em',color:'var(--muted)'}}>{h}</th>)}
+                      </tr></thead>
+                      <tbody>
+                        {s.entries.map((e,i)=>(
+                          <tr key={e.id} style={{borderTop:'1px solid var(--border)',background:i%2?'rgba(123,104,238,.03)':'transparent'}}>
+                            <td style={{padding:'6px 8px',fontWeight:500}}>{e.exercise}</td>
+                            <td style={{padding:'6px 8px',fontFamily:"'DM Mono',monospace"}}>{e.weight}{unit}</td>
+                            <td style={{padding:'6px 8px',fontFamily:"'DM Mono',monospace"}}>{e.sets}</td>
+                            <td style={{padding:'6px 8px',fontFamily:"'DM Mono',monospace"}}>{e.reps}</td>
+                            <td style={{padding:'6px 8px',fontFamily:"'DM Mono',monospace",color:'var(--lav)',fontWeight:600}}>{fmt(e.volume)}</td>
+                            <td style={{padding:'6px 8px'}}><button onClick={()=>removeEntry(s.id,e.id)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:13}}
+                              onMouseEnter={ev=>ev.currentTarget.style.color='var(--red)'}
+                              onMouseLeave={ev=>ev.currentTarget.style.color='var(--muted)'}>×</button></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── ROUTINES ── */
+const PRESET_ROUTINES=[
+  {id:'pr1',name:'ASU SDFC Beginner 3×5',tags:['Beginner','3 days/wk'],exercises:[
+    {id:uid(),name:'Back Squat',sets:3,reps:5,rest:'3 min',notes:'Focus on depth — film every session'},
+    {id:uid(),name:'Bench Press',sets:3,reps:5,rest:'3 min',notes:'Retract scapula before unracking'},
+    {id:uid(),name:'Barbell Row',sets:3,reps:5,rest:'3 min',notes:'Controlled eccentric, squeeze at top'},
+  ]},
+  {id:'pr2',name:'Squat Form Correction Plan',tags:['Intermediate','2 days/wk'],exercises:[
+    {id:uid(),name:'Goblet Squat',sets:2,reps:10,rest:'90 s',notes:'Hip mobility warm-up drill'},
+    {id:uid(),name:'Band-Around-Knees Squat',sets:3,reps:10,rest:'90 s',notes:'Push knees out against band — key drill'},
+    {id:uid(),name:'Back Squat',sets:4,reps:5,rest:'3 min',notes:'Record all sets and re-analyze with ALIGN'},
+    {id:uid(),name:'Romanian Deadlift',sets:3,reps:8,rest:'2 min',notes:'Posterior chain strength'},
+    {id:uid(),name:'Hip Thrust',sets:3,reps:10,rest:'2 min',notes:'Glute activation — addresses knee cave'},
+  ]},
+];
+
+function RoutinesSection(){
+  const [routines,setRoutines]=useState(()=>{try{const s=localStorage.getItem('align_routines2');return s?JSON.parse(s):PRESET_ROUTINES}catch{return PRESET_ROUTINES}});
+  const [active,setActive]=useState(null);
+  const [creating,setCreating]=useState(false);
+  const [newName,setNewName]=useState('');
+  const [exercises,setExercises]=useState([]);
+  const [newEx,setNewEx]=useState({name:'Back Squat',sets:'',reps:'',rest:'',notes:''});
+
+  useEffect(()=>{localStorage.setItem('align_routines2',JSON.stringify(routines))},[routines]);
+
+  const save=()=>{
+    if(!newName.trim()||exercises.length===0)return;
+    setRoutines(p=>[{id:uid(),name:newName,tags:['Custom'],exercises},...p]);
+    setCreating(false);setNewName('');setExercises([]);
+  };
+  const addEx=()=>{
+    if(!newEx.sets||!newEx.reps)return;
+    setExercises(p=>[...p,{id:uid(),...newEx,sets:+newEx.sets,reps:+newEx.reps}]);
+    setNewEx(e=>({...e,sets:'',reps:'',rest:'',notes:''}));
+  };
+  const viewed=routines.find(r=>r.id===active);
+
+  return(
+    <section id="routines" className="section">
+      <div className="container">
+        <div className="routines-header" style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',marginBottom:24}}>
+          <div>
+            <span className="tag tag-lav" style={{marginBottom:10,display:'inline-block'}}>Routines</span>
+            <h2 style={{fontSize:28,fontWeight:700,letterSpacing:'-.02em'}}>Training Plans</h2>
+            <p style={{color:'var(--muted)',fontSize:15,marginTop:6}}>Build plans, prescribe sets & reps, link to form analysis.</p>
+          </div>
+          {!creating&&<button className="btn-primary" onClick={()=>{setCreating(true);setActive(null);}}>+ Create Routine</button>}
+        </div>
+
+        <div className="routines-grid" style={{display:'grid',gridTemplateColumns:'280px 1fr',gap:20}}>
+          <div style={{display:'flex',flexDirection:'column',gap:10}}>
+            {routines.map(r=>(
+              <div key={r.id} className="card" onClick={()=>{setActive(r.id);setCreating(false);}}
+                style={{padding:'14px 16px',cursor:'pointer',border:active===r.id?'1.5px solid var(--lav)':'1px solid var(--border)',transition:'border .15s',boxShadow:active===r.id?'0 4px 14px rgba(123,104,238,.12)':'none'}}>
+                <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:8}}>
+                  <div style={{fontWeight:700,fontSize:14,lineHeight:1.3,flex:1}}>{r.name}</div>
+                  <button onClick={e=>{e.stopPropagation();setRoutines(p=>p.filter(x=>x.id!==r.id));if(active===r.id)setActive(null);}}
+                    style={{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:14,flexShrink:0}}
+                    onMouseEnter={e=>e.currentTarget.style.color='var(--red)'}
+                    onMouseLeave={e=>e.currentTarget.style.color='var(--muted)'}>×</button>
+                </div>
+                <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:6}}>
+                  {r.tags.map(t=><span key={t} className="tag tag-lav" style={{fontSize:10}}>{t}</span>)}
+                  <span style={{fontSize:12,color:'var(--muted)'}}>{r.exercises.length} exercises</span>
+                </div>
+              </div>
+            ))}
+            {routines.length===0&&<div className="card" style={{padding:20,textAlign:'center',color:'var(--muted)',fontSize:13}}>No routines — create one!</div>}
+          </div>
+
+          <div>
+            {creating&&(
+              <div className="card" style={{padding:24,animation:'fadeUp .3s ease both'}}>
+                <h3 style={{fontSize:17,fontWeight:700,marginBottom:18}}>New Routine</h3>
+                <span className="label">Name</span>
+                <input type="text" placeholder="e.g. Monday Push Day" value={newName} onChange={e=>setNewName(e.target.value)} style={{marginBottom:18}}/>
+                <div style={{fontWeight:700,fontSize:14,marginBottom:12}}>Exercises</div>
+                {exercises.map(e=>(
+                  <div key={e.id} style={{display:'flex',alignItems:'center',gap:8,marginBottom:8,background:'var(--off)',borderRadius:9,padding:'9px 12px',flexWrap:'wrap'}}>
+                    <span style={{flex:1,fontSize:13,fontWeight:600,minWidth:100}}>{e.name}</span>
+                    <span style={{fontSize:12,color:'var(--muted)',fontFamily:"'DM Mono',monospace"}}>{e.sets}×{e.reps}</span>
+                    {e.rest&&<span style={{fontSize:12,color:'var(--muted)'}}>{e.rest}</span>}
+                    <button onClick={()=>setExercises(p=>p.filter(x=>x.id!==e.id))} style={{background:'none',border:'none',cursor:'pointer',color:'var(--muted)',fontSize:14}}
+                      onMouseEnter={ev=>ev.currentTarget.style.color='var(--red)'}
+                      onMouseLeave={ev=>ev.currentTarget.style.color='var(--muted)'}>×</button>
+                  </div>
+                ))}
+                <div style={{background:'var(--off)',borderRadius:12,padding:16,marginBottom:18}}>
+                  <div style={{fontWeight:600,fontSize:13,marginBottom:10}}>Add Exercise</div>
+                  <div className="ex-add-grid" style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:8,marginBottom:8}}>
+                    <div><span className="label">Exercise</span><select value={newEx.name} onChange={e=>setNewEx(f=>({...f,name:e.target.value}))}>{EXERCISES.map(ex=><option key={ex}>{ex}</option>)}</select></div>
+                    <div><span className="label">Sets</span><input type="number" min="1" placeholder="3" value={newEx.sets} onChange={e=>setNewEx(f=>({...f,sets:e.target.value}))}/></div>
+                    <div><span className="label">Reps</span><input type="number" min="1" placeholder="5" value={newEx.reps} onChange={e=>setNewEx(f=>({...f,reps:e.target.value}))}/></div>
+                    <div><span className="label">Rest</span><input type="text" placeholder="3 min" value={newEx.rest} onChange={e=>setNewEx(f=>({...f,rest:e.target.value}))}/></div>
+                  </div>
+                  <input type="text" placeholder="Notes (optional)" value={newEx.notes} onChange={e=>setNewEx(f=>({...f,notes:e.target.value}))} style={{marginBottom:10}}/>
+                  <button className="btn-ghost" style={{fontSize:13}} onClick={addEx} disabled={!newEx.sets||!newEx.reps}>+ Add to Routine</button>
+                </div>
+                <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+                  <button className="btn-primary" style={{flex:1,padding:'11px',minWidth:120}} onClick={save} disabled={!newName.trim()||exercises.length===0}>Save Routine</button>
+                  <button className="btn-ghost" onClick={()=>setCreating(false)}>Cancel</button>
+                </div>
+              </div>
+            )}
+            {viewed&&!creating&&(
+              <div className="card" style={{padding:24,animation:'slideIn .3s ease both'}}>
+                <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:4,gap:12,flexWrap:'wrap'}}>
+                  <h3 style={{fontSize:17,fontWeight:700,lineHeight:1.3,flex:1}}>{viewed.name}</h3>
+                  <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+                    {viewed.tags.map(t=><span key={t} className="tag tag-lav">{t}</span>)}
+                  </div>
+                </div>
+                <p style={{fontSize:13,color:'var(--muted)',marginBottom:20}}>{viewed.exercises.length} exercises</p>
+                {viewed.exercises.map((ex,i)=>(
+                  <div key={ex.id} style={{display:'flex',gap:10,alignItems:'flex-start',padding:'13px 0',borderBottom:i<viewed.exercises.length-1?'1px solid var(--border)':'none',flexWrap:'wrap'}}>
+                    <span style={{fontSize:12,fontWeight:700,color:'var(--muted)',fontFamily:"'DM Mono',monospace",minWidth:24,paddingTop:2}}>{String(i+1).padStart(2,'0')}</span>
+                    <div style={{flex:1,minWidth:120}}>
+                      <div style={{fontWeight:700,fontSize:14}}>{ex.name}</div>
+                      {ex.notes&&<div style={{fontSize:12,color:'var(--muted)',marginTop:2}}>{ex.notes}</div>}
+                    </div>
+                    <div style={{textAlign:'center',minWidth:64}}>
+                      <div style={{fontSize:17,fontWeight:700,color:'var(--lav)'}}>{ex.sets}×{ex.reps}</div>
+                      <div style={{fontSize:11,color:'var(--muted)'}}>sets×reps</div>
+                    </div>
+                    {ex.rest&&<div style={{textAlign:'center',minWidth:52}}>
+                      <div style={{fontSize:13,fontWeight:600}}>{ex.rest}</div>
+                      <div style={{fontSize:11,color:'var(--muted)'}}>rest</div>
+                    </div>}
+                  </div>
+                ))}
+                <div style={{marginTop:18,background:'var(--lav-d)',borderRadius:10,padding:'14px 16px',display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+                  <span style={{fontSize:18}}>📹</span>
+                  <div style={{fontSize:13,lineHeight:1.65,flex:1}}>
+                    Record your <strong>{viewed.exercises.find(e=>e.name.toLowerCase().includes('squat'))?.name||viewed.exercises[0]?.name}</strong> and{' '}
+                    <button onClick={()=>{const ps=document.getElementById('page-scroll');const t=document.getElementById('analyze');if(ps&&t)ps.scrollTo({top:t.offsetTop-64,behavior:'smooth'});}}
+                      style={{background:'none',border:'none',color:'var(--lav)',cursor:'pointer',fontWeight:700,fontSize:13,padding:0}}>analyze your form →</button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {!viewed&&!creating&&(
+              <div className="card" style={{padding:40,textAlign:'center',color:'var(--muted)'}}>
+                <div style={{fontSize:32,marginBottom:10,opacity:.3}}>📋</div>
+                <div style={{fontWeight:600}}>Select a routine</div>
+                <div style={{fontSize:13,marginTop:4}}>Or create a new one.</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── Footer ── */
+function Footer(){
+  return(
+    <footer style={{background:'var(--navy)',padding:'36px 24px'}}>
+      <div className="footer-inner" style={{maxWidth:1100,margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <Logo size={17} light/>
+        <span style={{color:'rgba(255,255,255,.3)',fontSize:13}}>CIS 515 · Team 2 · Arizona State University · 2026</span>
+      </div>
+    </footer>
+  );
+}
+
+/* ── App ── */
+function App(){
+  const [tweaks,setTweaks]=useState(TWEAK_DEFAULTS);
+  const [tweakVisible,setTweakVisible]=useState(false);
+  useEffect(()=>{
+    window.addEventListener('message',e=>{
+      if(e.data?.type==='__activate_edit_mode')setTweakVisible(true);
+      if(e.data?.type==='__deactivate_edit_mode')setTweakVisible(false);
+    });
+    window.parent.postMessage({type:'__edit_mode_available'},'*');
+  },[]);
+  const setTweak=(k,v)=>{const t={...tweaks,[k]:v};setTweaks(t);window.parent.postMessage({type:'__edit_mode_set_keys',edits:{[k]:v}},'*');};
+
+  return(
+    <div style={{'--lav':tweaks.accentColor,'--lav-d':tweaks.accentColor+'20','--navy':tweaks.navyColor}}>
+      <div id="page-scroll" style={{height:'100vh',overflowY:'auto'}}>
+        <Nav/>
+        <Hero/>
+        <AnalyzeSection/>
+        <TrackerSection unit={tweaks.unitSystem}/>
+        <RoutinesSection/>
+        <Footer/>
+      </div>
+      {tweakVisible&&(
+        <div style={{position:'fixed',bottom:24,right:24,background:'#fff',border:'1px solid var(--border)',borderRadius:14,padding:20,width:220,boxShadow:'0 8px 32px rgba(0,0,0,.12)',zIndex:999}}>
+          <div style={{fontWeight:700,fontSize:14,marginBottom:14}}>Tweaks</div>
+          <span className="label">Accent Color</span>
+          <div style={{display:'flex',gap:7,marginBottom:16}}>
+            {['#7B68EE','#5B8DEE','#EE6895','#52C98A','#F5A623'].map(c=>(
+              <button key={c} onClick={()=>setTweak('accentColor',c)} style={{width:26,height:26,borderRadius:'50%',background:c,border:tweaks.accentColor===c?'3px solid #0D1B3E':'2px solid transparent',cursor:'pointer'}}/>
+            ))}
+          </div>
+          <span className="label">Unit System</span>
+          <div style={{display:'flex',gap:8}}>
+            {['lbs','kg'].map(u=>(
+              <button key={u} onClick={()=>setTweak('unitSystem',u)} style={{flex:1,padding:'7px',borderRadius:7,border:tweaks.unitSystem===u?'2px solid var(--lav)':'1.5px solid var(--border)',background:tweaks.unitSystem===u?'var(--lav-d)':'#fff',color:tweaks.unitSystem===u?'var(--lav)':'var(--navy)',fontWeight:600,fontSize:13,cursor:'pointer'}}>{u}</button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
